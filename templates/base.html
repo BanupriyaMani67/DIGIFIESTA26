@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#13090b">
+    <title>{% block title %}DIGIFIESTA 2026 | MVJ Degree College{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="{{ url_for('index') }}" aria-label="MVJ Degree College, DIGIFIESTA 2026 home">
+          <span>MVJ DEGREE COLLEGE</span>
+          <strong>DIGIFIESTA <em>2026</em></strong>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+        <nav id="main-nav" class="top-nav" aria-label="Main navigation">
+          <a href="{{ url_for('index') }}">Home</a>
+          <a href="{{ url_for('day1_page') }}">Day 1</a>
+          <a href="{{ url_for('day2_page') }}">Day 2</a>
+          <a href="{{ url_for('results') }}">Results</a>
+          <a class="nav-admin" href="{{ url_for('admin_dashboard') if session.get('admin_authenticated') else url_for('admin_login') }}">Admin</a>
+        </nav>
+      </div>
+    </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="container flash-stack" aria-live="polite">
+          {% for category, message in messages %}
+            <div class="notice notice-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</div>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+    <main>{% block content %}{% endblock %}</main>
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <div class="brand footer-brand">
+          <span>MVJ DEGREE COLLEGE</span>
+          <strong>DIGIFIESTA <em>2026</em></strong>
+          <small>15 October 2026 · 16 October 2026</small>
+        </div>
+        <p>Innovate. Create. Compete.</p>
+        <nav aria-label="Footer navigation">
+          <a href="{{ url_for('day1_page') }}">Day 1</a>
+          <a href="{{ url_for('day2_page') }}">Day 2</a>
+          <a href="{{ url_for('results') }}">Results</a>
+          <a href="{{ url_for('admin_login') }}">Admin Login</a>
+        </nav>
+      </div>
+    </footer>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

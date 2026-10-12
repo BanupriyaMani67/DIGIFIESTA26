@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Administrator Login | DIGIFIESTA 2026{% endblock %}
+{% block content %}
+  <section class="page-intro container narrow">
+    <p class="eyebrow">PRIVATE ORGANIZER AREA</p>
+    <h1>Administrator <span>Login</span></h1>
+    <p>Only the locally configured administrator can access registration, score, and publication controls.</p>
+  </section>
+  <section class="section container narrow">
+    <div class="form-panel">
+      <form method="post" action="{{ url_for('admin_login') }}" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="full">Admin email<input type="email" value="banupriyamani96@gmail.com" readonly aria-readonly="true"></label>
+        <label class="full">Password<input type="password" name="password" required autocomplete="current-password"></label>
+        <div class="full"><button class="button button-primary" type="submit">Sign in securely</button></div>
+      </form>
+      <p class="muted small">If the local admin password has not been configured, run <code>python app.py setup-admin</code> in PowerShell.</p>
+    </div>
+  </section>
+{% endblock %}

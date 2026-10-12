@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | DIGIFIESTA 2026{% endblock %}
+{% block content %}
+  <section class="page-intro container">
+    <p class="eyebrow">PRIVATE ORGANIZER AREA</p>
+    <div class="admin-heading"><div><h1>Admin <span>Dashboard</span></h1><p>Signed in as {{ session.get('admin_email') }}. All updates are saved to the local SQLite database.</p></div>
+      <form method="post" action="{{ url_for('admin_logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-quiet" type="submit">Sign out</button></form>
+    </div>
+  </section>
+  <nav class="admin-tabs container" aria-label="Dashboard sections">
+    <a href="#day1">Day 1 registrations <span>{{ day1|length }}</span></a>
+    <a href="#day2">Day 2 teams <span>{{ day2|length }}</span></a>
+    <a href="#scores">Scores</a>
+    <a href="#results">Publish results</a>
+  </nav>
+  <section class="section container" id="registrations">
+    <div class="section-heading"><div><p class="eyebrow">PRIVATE REGISTRATION DATA</p><h2>Registrations</h2></div>
+      <div class="action-row compact-actions"><a class="button button-secondary" href="{{ url_for('export_csv', kind='day1') }}">Export Day 1 CSV</a><a class="button button-secondary" href="{{ url_for('export_csv', kind='day2') }}">Export Day 2 CSV</a></div>
+    </div>
+    <form method="get" action="{{ url_for('admin_dashboard') }}" class="search-form">
+      <label class="sr-only" for="registration-search">Search name, event, class, college ID, or reference</label>
+      <input id="registration-search" type="search" name="q" value="{{ search }}" placeholder="Search name, event, class/year, college ID, or reference">
+      <button class="button button-secondary" type="submit">Search</button>
+      {% if search %}<a class="text-link" href="{{ url_for('admin_dashboard') }}">Clear</a>{% endif %}
+    </form>
+  </section>
+  <section class="section container" id="day1">
+    <div class="section-heading"><div><p class="eyebrow">15 OCTOBER 2026</p><h2>Day 1 participants</h2></div></div>
+    <details class="form-panel add-panel"><summary class="text-link">Add participant manually</summary>
+      <form method="post" action="{{ url_for('admin_add_day1') }}" class="form-grid top-gap">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <fieldset class="event-choice full"><legend>Select event(s)</legend>{% for event in day1_events %}<label class="check-card"><input type="checkbox" name="events" value="{{ event }}"><span>{{ event }}</span></label>{% endfor %}</fieldset>
+        <label>Name<input name="participant_name" required maxlength="120"></label><label>Class/year<input name="participant_class" required maxlength="80"></label><label>College ID/UUCMS ID<input name="participant_id" required maxlength="80"></label>
+        <div class="full admin-member2" data-admin-day1-team-fields><h3>Second member (required for Construct2Conquer)</h3><div class="form-grid"><label>Name<input name="member2_name" maxlength="120"></label><label>Class/year<input name="member2_class" maxlength="80"></label><label>College ID/UUCMS ID<input name="member2_id" maxlength="80"></label></div></div>
+        <div class="full"><button class="button button-primary" type="submit">Add registration</button></div>
+      </form>
+    </details>
+    {% if not day1 %}<div class="empty-panel"><h3>No matching Day 1 registrations</h3><p>Submitted registrations will appear here.</p></div>{% endif %}
+    <div class="admin-record-list">
+      {% for record in day1 %}
+        <details class="record-card">
+          <summary><span><strong>{{ record.members|map(attribute='full_name')|join(' / ') }}</strong><small>{{ record.registration_ref }} · {{ record.created_at|replace('T', ' ')|replace('Z', ' UTC') }}</small></span><span class="record-events">{{ record.events|join(' · ') }}</span></summary>
+          <form method="post" action="{{ url_for('admin_edit_day1', registration_id=record.id) }}" class="form-grid top-gap">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <fieldset class="event-choice full"><legend>Events</legend>{% for event in day1_events %}<label class="check-card"><input type="checkbox" name="events" value="{{ event }}" {% if event in record.events %}checked{% endif %}><span>{{ event }}</span></label>{% endfor %}</fieldset>
+            <label>Name<input name="participant_name" value="{{ record.members[0].full_name }}" required maxlength="120"></label>
+            <label>Class/year<input name="participant_class" value="{{ record.members[0].class_year }}" required maxlength="80"></label>
+            <label>College ID/UUCMS ID<input name="participant_id" value="{{ record.members[0].college_id }}" required maxlength="80"></label>
+            <div class="full"><h3>Second member (required if Construct2Conquer is selected)</h3><div class="form-grid">
+              <label>Name<input name="member2_name" value="{{ record.members[1].full_name if record.members|length > 1 else '' }}" maxlength="120"></label>
+              <label>Class/year<input name="member2_class" value="{{ record.members[1].class_year if record.members|length > 1 else '' }}" maxlength="80"></label>
+              <label>College ID/UUCMS ID<input name="member2_id" value="{{ record.members[1].college_id if record.members|length > 1 else '' }}" maxlength="80"></label>
+            </div></div>
+            <div class="full action-row"><button class="button button-primary" type="submit">Save changes</button></div>
+          </form>
+          <form method="post" action="{{ url_for('admin_delete_day1', registration_id=record.id) }}" class="delete-form" data-confirm="Delete this Day 1 registration and its scores?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-danger" type="submit">Delete registration</button></form>
+        </details>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="section container" id="day2">
+    <div class="section-heading"><div><p class="eyebrow">16 OCTOBER 2026</p><h2>Day 2 teams</h2></div></div>
+    <details class="form-panel add-panel"><summary class="text-link">Add team manually</summary>
+      <form method="post" action="{{ url_for('admin_add_day2') }}" class="form-grid top-gap" data-admin-team-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Team name<input name="team_name" maxlength="120" required></label><label>Submitting member<input name="submitter_name" maxlength="120" required></label>
+        <fieldset class="event-choice full"><legend>Selected events</legend>{% for event in day2_events %}<label class="check-card"><input type="checkbox" name="events" value="{{ event }}"><span>{{ event }}</span></label>{% endfor %}</fieldset>
+        <div class="full"><div class="section-heading compact"><h3>Team members</h3><button class="button button-secondary" type="button" data-add-member>Add member</button></div>
+          <div class="member-list" data-member-list>
+            {% for member in range(2) %}<div class="member-row"><label>Name<input name="member_name" required maxlength="120"></label><label>Class/year<input name="member_class" required maxlength="80"></label><label>College ID/UUCMS ID<input name="member_id" required maxlength="80"></label><button class="button button-quiet remove-member" type="button" data-remove-member {% if member == 0 %}hidden{% endif %}>Remove</button></div>{% endfor %}
+          </div>
+        </div>
+        <div class="full"><button class="button button-primary" type="submit">Add team</button></div>
+      </form>
+    </details>
+    {% if not day2 %}<div class="empty-panel"><h3>No matching Day 2 teams</h3><p>Submitted teams will appear here.</p></div>{% endif %}
+    <div class="admin-record-list">
+      {% for team in day2 %}
+        <details class="record-card">
+          <summary><span><strong>{{ team.team_name }}</strong><small>{{ team.registration_ref }} · Submitted by {{ team.submitter_name }} · {{ team.created_at|replace('T', ' ')|replace('Z', ' UTC') }}</small></span><span class="record-events">{{ team.events|join(' · ') }}</span></summary>
+          <p class="member-summary">{% for member in team.members %}{{ member.full_name }} — {{ member.class_year }} — ID {{ member.college_id }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+          <form method="post" action="{{ url_for('admin_edit_day2', team_id=team.id) }}" class="form-grid top-gap" data-admin-team-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label>Team name<input name="team_name" value="{{ team.team_name }}" maxlength="120" required></label><label>Submitting member<input name="submitter_name" value="{{ team.submitter_name }}" maxlength="120" required></label>
+            <fieldset class="event-choice full"><legend>Selected events</legend>{% for event in day2_events %}<label class="check-card"><input type="checkbox" name="events" value="{{ event }}" {% if event in team.events %}checked{% endif %}><span>{{ event }}</span></label>{% endfor %}</fieldset>
+            <div class="full"><div class="section-heading compact"><h3>Team members</h3><button class="button button-secondary" type="button" data-add-member>Add member</button></div>
+              <div class="member-list" data-member-list>
+                {% for member in team.members %}<div class="member-row"><label>Name<input name="member_name" value="{{ member.full_name }}" required maxlength="120"></label><label>Class/year<input name="member_class" value="{{ member.class_year }}" required maxlength="80"></label><label>College ID/UUCMS ID<input name="member_id" value="{{ member.college_id }}" required maxlength="80"></label><button class="button button-quiet remove-member" type="button" data-remove-member {% if loop.first and team.members|length == 2 %}hidden{% endif %}>Remove</button></div>{% endfor %}
+              </div>
+            </div>
+            <div class="full action-row"><button class="button button-primary" type="submit">Save team changes</button></div>
+          </form>
+          <form method="post" action="{{ url_for('admin_delete_day2', team_id=team.id) }}" class="delete-form" data-confirm="Delete this team and its scores?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-danger" type="submit">Delete team</button></form>
+        </details>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="section container" id="scores">
+    <div class="section-heading"><div><p class="eyebrow">MANUAL SCORE ENTRY</p><h2>Scores</h2><p class="muted">Scores must be non-negative. Leave Day 1 blank or clear both Day 2 fields to remove a score; missing values are never treated as zero.</p></div></div>
+    <div class="score-section"><h3>Day 1 scores</h3>
+      {% for row in day1_score_rows %}
+        <form method="post" action="{{ url_for('save_day1_score', registration_id=row.registration_id, event_index=day1_events.index(row.event)) }}" class="score-row">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div><strong>{{ row.event }}</strong><span>{{ row.participant_name }} · {{ row.registration_ref }}</span></div>
+          <label>Score<input type="number" name="score" min="0" step="any" value="{{ row.score if row.score is not none else '' }}" placeholder="Not scored"></label><button class="button button-secondary" type="submit">Save</button>
+        </form>
+      {% else %}<p class="muted">Register a Day 1 entrant to enter a score.</p>{% endfor %}
+    </div>
+    <div class="score-section"><h3>Day 2 round scores</h3>
+      {% for row in day2_score_rows %}
+        <form method="post" action="{{ url_for('save_day2_score', team_id=row.team_id, event_index=day2_events.index(row.event)) }}" class="score-row">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div><strong>{{ row.event }}</strong><span>{{ row.team_name }} · {{ row.registration_ref }} · {{ day2_rounds[row.event]|join(' + ') }}</span></div>
+          <label>Round 1<input type="number" name="round1" min="0" step="any" value="{{ row.round1 if row.round1 is not none else '' }}" placeholder="Required"></label>
+          <label>Round 2<input type="number" name="round2" min="0" step="any" value="{{ row.round2 if row.round2 is not none else '' }}" placeholder="Required"></label>
+          {% if row.round1 is not none and row.round2 is not none %}<span class="score-total">Total {{ (row.round1 + row.round2)|score_number }}</span>{% endif %}
+          <button class="button button-secondary" type="submit">Save</button>
+        </form>
+      {% else %}<p class="muted">Register a Day 2 team to enter round scores.</p>{% endfor %}
+    </div>
+  </section>
+  <section class="section container" id="results">
+    <div class="section-heading"><div><p class="eyebrow">REVIEW BEFORE PUBLICATION</p><h2>Calculated results</h2></div><span class="status-pill {{ 'status-ready' if preview.ready else 'status-incomplete' }}">{{ 'Ready to publish' if preview.ready else 'Incomplete scores' }}</span></div>
+    {% if published %}<div class="notice notice-warning">A published snapshot is live. Score or registration changes do not change the public snapshot until you publish again. Unpublish to hide it.</div>{% endif %}
+    {% if preview.issues %}<div class="notice notice-error"><strong>Complete all registered entrant scores before publication:</strong><ul>{% for issue in preview.issues %}<li>{{ issue }}</li>{% endfor %}</ul></div>{% endif %}
+    <div class="results-grid admin-preview">
+      {% for event in preview.day1 %}<article class="result-card"><h3>{{ event.event }}</h3>{% if not event.complete %}<p class="muted">Not ranked: scores are incomplete.</p>{% endif %}{% for row in event.standings %}<p><strong>#{{ row.place }} {{ row.name }}</strong> — {{ row.score|score_number }}</p>{% else %}<p class="muted">No completed entries.</p>{% endfor %}</article>{% endfor %}
+      {% for event in preview.day2 %}<article class="result-card"><h3>{{ event.event }}</h3>{% if not event.complete %}<p class="muted">Not ranked: both round scores are required for each registered team.</p>{% endif %}{% for row in event.standings %}<p><strong>#{{ row.place }} {{ row.name }}</strong> — {{ row.score|score_number }}</p>{% else %}<p class="muted">No completed entries.</p>{% endfor %}</article>{% endfor %}
+      <article class="result-card championship-panel"><h3>Overall Day 2 Championship</h3><p class="muted">{{ preview.championship.note }}</p>{% for row in preview.championship.standings %}<p><strong>#{{ row.place }} {{ row.name }}</strong> — {{ row.score|score_number }}</p>{% else %}<p class="muted">No team is registered for all three Day 2 events with complete scores.</p>{% endfor %}</article>
+    </div>
+    <div class="action-row publish-actions">
+      <form method="post" action="{{ url_for('publish_results') }}" data-confirm="Publish this calculated results snapshot for public viewing?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-primary" type="submit" {% if not preview.ready %}disabled{% endif %}>Review and publish results</button></form>
+      {% if published %}<form method="post" action="{{ url_for('unpublish_results') }}" data-confirm="Hide published results from the public page?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-danger" type="submit">Unpublish results</button></form>{% endif %}
+    </div>
+  </section>
+  <template id="admin-member-row-template"><div class="member-row"><label>Name<input name="member_name" required maxlength="120"></label><label>Class/year<input name="member_class" required maxlength="80"></label><label>College ID/UUCMS ID<input name="member_id" required maxlength="80"></label><button class="button button-quiet remove-member" type="button" data-remove-member>Remove</button></div></template>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>{% endblock %}

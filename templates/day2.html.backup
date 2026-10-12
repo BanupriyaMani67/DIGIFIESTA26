@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Day 2 Team Registration | DIGIFIESTA 2026{% endblock %}
+{% block content %}
+  <section class="page-intro container">
+    <p class="eyebrow">16 OCTOBER 2026 · TEAM EVENTS</p>
+    <h1>Day 2 <span>Team Challenges</span></h1>
+    <p>One teammate can register the whole team for one or more events. Every team member is entered on this form; no member accounts are needed.</p>
+  </section>
+  <section class="section container">
+    <div class="event-grid">
+      {% for event in day2_events %}
+        <article class="event-card">
+          <span class="event-day">DAY 2 · 16 OCT 2026</span>
+          <h2>{{ event }}</h2>
+          <p>{{ event_details[event].description }}</p>
+          <ul class="round-list">{% for round in day2_rounds[event] %}<li>{{ loop.index }}. {{ round }}</li>{% endfor %}</ul>
+          <p class="muted">{{ event_details[event].rules }}</p>
+          <a class="text-link" href="#registration" data-select-event="{{ event }}">Register your team <span aria-hidden="true">→</span></a>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="section container" id="registration">
+    <div class="form-panel">
+      <p class="eyebrow">One form per team</p>
+      <h2>Team registration</h2>
+      <form method="post" action="{{ url_for('register_day2') }}" class="form-grid" data-team-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Team name<input name="team_name" maxlength="120" required></label>
+        <label>Submitting member<input name="submitter_name" maxlength="120" required></label>
+        <fieldset class="event-choice full">
+          <legend>Select Day 2 event(s)</legend>
+          {% for event in day2_events %}
+            <label class="check-card"><input type="checkbox" name="events" value="{{ event }}" data-event-choice="{{ event }}"><span>{{ event }}</span></label>
+          {% endfor %}
+        </fieldset>
+        <div class="full">
+          <div class="section-heading compact"><div><h3>Team members</h3><p class="muted">At least two members are required. Add everyone before submitting.</p></div><button class="button button-secondary" type="button" data-add-member>Add team member</button></div>
+          <div class="member-list" data-member-list>
+            <div class="member-row">
+              <label>Member name<input name="member_name" maxlength="120" required></label>
+              <label>Class/year<input name="member_class" maxlength="80" required></label>
+              <label>College ID/UUCMS ID<input name="member_id" maxlength="80" required></label>
+              <button class="button button-quiet remove-member" type="button" data-remove-member aria-label="Remove this member" hidden>Remove</button>
+            </div>
+            <div class="member-row">
+              <label>Member name<input name="member_name" maxlength="120" required></label>
+              <label>Class/year<input name="member_class" maxlength="80" required></label>
+              <label>College ID/UUCMS ID<input name="member_id" maxlength="80" required></label>
+              <button class="button button-quiet remove-member" type="button" data-remove-member aria-label="Remove this member">Remove</button>
+            </div>
+          </div>
+        </div>
+        <div class="full"><button class="button button-primary" type="submit">Save team registration</button></div>
+      </form>
+      <template id="member-row-template">
+        <div class="member-row">
+          <label>Member name<input name="member_name" maxlength="120" required></label>
+          <label>Class/year<input name="member_class" maxlength="80" required></label>
+          <label>College ID/UUCMS ID<input name="member_id" maxlength="80" required></label>
+          <button class="button button-quiet remove-member" type="button" data-remove-member aria-label="Remove this member">Remove</button>
+        </div>
+      </template>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/day2.js') }}" defer></script>{% endblock %}

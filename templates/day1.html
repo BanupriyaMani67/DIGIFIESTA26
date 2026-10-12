@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Day 1 Events & Registration | DIGIFIESTA 2026{% endblock %}
+{% block content %}
+  <section class="page-intro container">
+    <p class="eyebrow">15 OCTOBER 2026</p>
+    <h1>Day 1 <span>Challenges</span></h1>
+    <p>Choose one or more events and register directly. No account or approval is required.</p>
+  </section>
+  <section class="section container">
+    <div class="event-grid">
+      {% for event in day1_events %}
+        <article class="event-card">
+          <span class="event-day">DAY 1 · 15 OCT 2026</span>
+          <h2>{{ event }}</h2>
+          <p>{{ event_details[event].description }}</p>
+          <p class="muted">{{ event_details[event].rules }}</p>
+          <a class="text-link" href="#registration" data-select-event="{{ event }}">Register for this event <span aria-hidden="true">→</span></a>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="section container" id="registration">
+    <div class="form-panel">
+      <p class="eyebrow">Day 1 entry</p>
+      <h2>Participant registration</h2>
+      <p class="muted">If Construct2Conquer is selected, enter exactly two teammates below.</p>
+      <form method="post" action="{{ url_for('register_day1') }}" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <fieldset class="event-choice full">
+          <legend>Select event(s)</legend>
+          {% for event in day1_events %}
+            <label class="check-card"><input type="checkbox" name="events" value="{{ event }}" data-event-choice="{{ event }}"><span>{{ event }}</span></label>
+          {% endfor %}
+        </fieldset>
+        <label>Full name<input name="participant_name" maxlength="120" required autocomplete="name"></label>
+        <label>Class/year<input name="participant_class" maxlength="80" required placeholder="e.g. BCA II Year"></label>
+        <label>College ID/UUCMS ID<input name="participant_id" maxlength="80" required></label>
+        <div class="team-fields full" data-day1-team-fields hidden>
+          <h3>Second Construct2Conquer member</h3>
+          <div class="form-grid">
+            <label>Member 2 name<input name="member2_name" maxlength="120"></label>
+            <label>Member 2 class/year<input name="member2_class" maxlength="80"></label>
+            <label>Member 2 College ID/UUCMS ID<input name="member2_id" maxlength="80"></label>
+          </div>
+        </div>
+        <div class="full"><button class="button button-primary" type="submit">Save Day 1 registration</button></div>
+      </form>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/day1.js') }}" defer></script>{% endblock %}

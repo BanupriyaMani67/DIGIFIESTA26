@@ -1,0 +1,26 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local configuration, credentials, sessions, and participant data
+.env
+.env.*
+!.env.example
+instance/*
+!instance/.gitkeep
+
+# Old Firebase / Node tooling caches and logs
+node_modules/
+functions/node_modules/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Editor/OS
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Published Results | DIGIFIESTA 2026{% endblock %}
+{% block content %}
+  <section class="page-intro container">
+    <p class="eyebrow">OFFICIAL SCOREBOARD</p>
+    <h1>Fest <span>Results</span></h1>
+    <p>Only results explicitly published by the organizer appear here.</p>
+  </section>
+  <section class="section container">
+    {% if not published %}
+      <div class="empty-panel"><span class="empty-mark">✦</span><h2>Results have not been published yet.</h2><p>Check back after the event organizer reviews and publishes the scores.</p></div>
+    {% else %}
+      <p class="muted">Published {{ results.published_at|replace('T', ' ')|replace('Z', ' UTC') }}</p>
+      <section class="results-section">
+        <div class="section-heading"><div><p class="eyebrow">15 OCTOBER 2026</p><h2>Day 1 winners</h2></div></div>
+        <div class="results-grid">
+          {% for event in results.day1 %}
+            <article class="result-card">
+              <h3>{{ event.event }}</h3>
+              {% if not event.standings %}<p class="muted">No scored entries have been published for this event.</p>{% endif %}
+              {% for entry in event.standings if entry.place <= 3 %}
+                <div class="winner-row place-{{ entry.place }}"><span class="place-badge">{{ entry.place }}</span><strong>{{ entry.name }}</strong><span>{{ entry.score|score_number }} pts</span></div>
+              {% endfor %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+      <section class="results-section">
+        <div class="section-heading"><div><p class="eyebrow">16 OCTOBER 2026</p><h2>Day 2 event winners</h2></div></div>
+        <div class="results-grid">
+          {% for event in results.day2 %}
+            <article class="result-card">
+              <h3>{{ event.event }}</h3>
+              <p class="muted">{{ event.rounds|join(' + ') }}</p>
+              {% if not event.standings %}<p class="muted">No scored team entries have been published for this event.</p>{% endif %}
+              {% for entry in event.standings if entry.place <= 3 %}
+                <div class="winner-row place-{{ entry.place }}"><span class="place-badge">{{ entry.place }}</span><strong>{{ entry.name }}</strong><span>{{ entry.score|score_number }} pts</span></div>
+              {% endfor %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+      <section class="section championship-panel">
+        <p class="eyebrow">DAY 2 ONLY</p><h2>Overall DIGIFIESTA Champion</h2>
+        <p class="muted">Prompt Battle + Meme Battle + Password Challenge. Day 1 scores are excluded.</p>
+        {% if not results.championship.standings %}<p>No overall championship standings have been published.</p>{% endif %}
+        {% for entry in results.championship.standings if entry.place <= 3 %}
+          <div class="winner-row place-{{ entry.place }}"><span class="place-badge">{{ entry.place }}</span><strong>{{ entry.name }}</strong><span>{{ entry.score|score_number }} pts</span></div>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}
