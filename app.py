@@ -1102,12 +1102,26 @@ def _score(raw: str, label: str) -> float:
 
 
 def _load_admin_config(path: str | Path) -> dict[str, str] | None:
+    env_email = os.environ.get("DIGIFIESTA_ADMIN_EMAIL", "").strip().lower()
+    env_hash = os.environ.get("DIGIFIESTA_ADMIN_PASSWORD_HASH", "").strip()
+
+    if env_email == ADMIN_EMAIL.lower() and env_hash:
+        return {
+            "email": env_email,
+            "password_hash": env_hash,
+        }
+
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    if data.get("email") != ADMIN_EMAIL or not data.get("password_hash"):
+
+    if (
+        data.get("email", "").lower() != ADMIN_EMAIL.lower()
+        or not data.get("password_hash")
+    ):
         return None
+
     return data
 
 
